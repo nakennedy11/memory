@@ -14,9 +14,9 @@ class MysteryMatch extends React.Component {
     let tileList = this.initiateTiles();
 
     this.state = { tiles: tileList, 
-	    clicks: 0, 
-	    first: "", 
-	    sec: "",
+	    clicks: 0,
+	    firstClicked: false,
+	    secondClicked: false,
     	    firstx: 0,
 	    firsty: 0,
 	    secondx: 0,
@@ -50,79 +50,58 @@ class MysteryMatch extends React.Component {
 	
 	// get a copy of the tile matrix  
 	let tempTiles = this.state.tiles.slice();
+	let first = this.state.firstClicked;
+	let second = this.state.secondClicked;
 
-	if (this.state.first === "") { //this is the first button clicked of a pair
-		console.log("this is the first tile clicked, ii = " + ii + " jj = " + jj + " val = " + letter);
-		// set the state to know what the first letter clicked was	
+	// if this is the first tile clicked of a pair  
+	if (!first) {
+		// set the tile to be seen and update the state	
 		tempTiles[ii][jj] = <Tile onClick={this.tileClick.bind(this, ii, jj, letter)}
 				ii={ii} jj={jj} hidden={false} tileletter={letter}/>;
 
-		this.setState({first: letter, firstx : ii, firsty : jj, tiles : tempTiles});
-		// show the hidden letter
-	} else if (this.state.first != "" && this.state.sec === "") { // one button clicked, this is the attempted match
-	console.log("this is the second tile clicked, ii = " + ii + " jj = " + jj + " val = " + letter);
-		console.log("testing out what first might be, first = " + this.state.first);
-		// set the state with the second clicks info	
-			tempTiles[ii][jj] = <Tile onClick={this.tileClick.bind(this, ii, jj, letter)}
-				ii={ii} jj={jj} hidden={false} tileletter={letter}/>;
-		console.log("post setting temp, second = " + this.state.sec);
-		this.setState({sec : letter, secondx : ii, secondy : jj, tiles : tempTiles});
+		this.setState({firstClicked : true, firstx : ii, firsty : jj, tiles : tempTiles});
 		
-	console.log("after setting state. second = " + this.state.sec);
+	} else if (first && !second) { // one button clicked, this is the attempted match
+		// set the state with the second clicks info and the letter to be visible	
+		tempTiles[ii][jj] = <Tile onClick={this.tileClick.bind(this, ii, jj, letter)}
+					ii={ii} jj={jj} hidden={false} tileletter={letter}/>;
+		
+		this.setState({secondClicked : true, secondx : ii, secondy : jj, tiles : tempTiles});
+		
 		// check if it is a match and handle appropiately
-	this.checkMatch(letter, ii, jj);
-		console.log("just check match and got back, second = " + letter);
+		this.checkMatch(letter, ii, jj);
 	}
   }
 	
   checkMatch(letter, x, y){
-	console.log("in checkMatch, sceond = " + this.state.sec + " first = " + this.state.first);
-	  console.log("what is tester?: " + letter);
-	  // setting variables for cleaner code
+	// setting variables for cleaner code
 		
 	let tileList = this.state.tiles.slice();
  
-	let first = this.state.first;
 	let firstx = this.state.firstx;
 	let firsty = this.state.firsty;
+	let first = tileList[firstx][firsty].tileletter;
 
-//	let second = tileList[this.state.secondx][this.state.secondy].tileLetter;
-//	let secondx = this.state.secondx;
-//	let secondy = this.state.secondy;
-
-//	console.log("in check match, first = " + first + " second = " + second);
-	// if it is a match
-	if (first === letter) {
-		// let them stay not hidden, and reset the values of the states buttons
-	console.log("its a match");
-		
-		this.resetClickedTiles();
-	} 
-	  else {  // not a match
+	if (first != letter) {  // not a match
 		// want to delay, hide the buttons, and reset what was remembered as clicked
-	console.log("not a match");
 		setTimeout(() => {
+			// set the two buttons to hide their values
 			tileList[firstx][firsty] = <Tile onClick={this.tileClick.bind(this, firstx, firsty, first)}
 				ii={firstx} jj={firsty} hidden={true} tileletter={first}/>;
-	console.log("just initiated first boy as being hidden");	
+	
 			tileList[x][y] = <Tile onClick={this.tileClick.bind(this, x, y, letter)}
 				ii={x} jj={y} hidden={true} tileletter={letter}/>;
-			console.log("just initiated the second boy as hidden");
 			this.setState({tiles : tileList});
-			console.log("just set the state of the hidden boys");
-			
-			console.log("just reset the clicked tiles");
 	     		}, 1000);
-		  this.setState({tiles : tileList});
-		  this.resetClickedTiles();		
+		  // update the state with the new tiles and forget the old click values
+		  
 	}
+  
+	this.resetClickedTiles();		
   }
-
   // sets the state back to no tiles having been clicked	
   resetClickedTiles() {
-	console.log("in reset tiles first = " + this.state.first + " second = " + this.state.sec);
-	this.setState({first : "", firstx : 0, firsty : 0, sec : "", secondx : 0, secondy : 0});
-	console.log("in reset tiles post setstate first = " + this.state.first + " second = " + this.state.sec);
+	this.setState({firstClicked : false, secondClicked: false, firstx : 0, firsty : 0, secondx : 0, secondy : 0});
   }
 
   // sets the game back to a starting state with a new set of random tiles
@@ -171,7 +150,8 @@ class MysteryMatch extends React.Component {
 	);
   }
 }
-  
+
+// tile item that hides value based on boolean flag, also makes itself not able to be clicked if its showing a letter already
 function Tile(props) {
 	let ii = props.ii;
 	let jj = props.jj;
